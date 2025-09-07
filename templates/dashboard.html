@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chess User Tracker - Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body
+    class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen"
+  >
+    <!-- Header -->
+    <header class="bg-black/20 backdrop-blur-lg border-b border-white/10">
+      <div
+        class="container mx-auto px-6 py-4 flex items-center justify-between"
+      >
+        <div class="flex items-center space-x-3">
+          <i class="fas fa-chess-knight text-3xl text-purple-400"></i>
+          <h1 class="text-2xl font-bold text-white">Chess User Tracker</h1>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div class="flex items-center space-x-2">
+            <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <span class="text-white text-sm">Real-time</span>
+          </div>
+          <a
+            href="{{ url_for('logout') }}"
+            class="px-4 py-2 bg-red-600/20 text-red-300 rounded-full text-sm font-semibold hover:bg-red-500/30 transition-all duration-200"
+          >
+            <i class="fas fa-sign-out-alt mr-1"></i> Logout
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-8">
+      <!-- Add user form -->
+      <div class="mb-8">
+        <form
+          action="{{ url_for('add_user') }}"
+          method="POST"
+          class="flex items-center justify-between bg-black/20 backdrop-blur-lg p-4 rounded-xl border border-white/10 shadow-lg"
+        >
+          <input
+            type="text"
+            name="username"
+            placeholder="Enter Chess.com username..."
+            required
+            class="flex-grow px-4 py-2 bg-transparent text-white placeholder-gray-400 focus:outline-none focus:ring-0"
+          />
+          <button
+            type="submit"
+            class="px-6 py-2 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-full font-semibold transition-all duration-200 transform hover:scale-105"
+          >
+            <i class="fas fa-plus mr-1"></i> Add User
+          </button>
+        </form>
+      </div>
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages() %} {% if messages %}
+      <div class="mb-8 space-y-2">
+        {% for message in messages %}
+        <div
+          class="p-4 rounded-lg bg-red-600/20 text-red-200 border border-red-500/20 flex items-center space-x-3 shadow-lg animate-fade-in-down"
+        >
+          <i class="fas fa-exclamation-circle"></i>
+          <p>{{ message }}</p>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %} {% endwith %}
+
+      <!-- Users grid -->
+      <div
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+      >
+        {% for user in users %}
+        <div
+          data-user-id="{{ user.id }}"
+          class="bg-black/20 backdrop-blur-lg rounded-xl p-6 border border-white/10 shadow-lg relative overflow-hidden transform transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+        >
+          <!-- Avatar & username -->
+          <div class="flex items-center space-x-4 mb-4">
+            <div class="relative w-16 h-16">
+              <img
+                src="{{ user.avatarUrl or 'https://www.chess.com/images/avatars/128/default_avatar.png' }}"
+                alt="{{ user.username }}'s avatar"
+                class="w-16 h-16 rounded-full border-2 border-purple-500/50 object-cover shadow-md"
+              />
+              <div
+                class="absolute bottom-0 right-0 w-4 h-4 rounded-full avatar-dot {% if user.status == 'online' %}bg-green-400{% elif user.status == 'offline' %}bg-red-400{% else %}bg-gray-400{% endif %} border-2 border-slate-900"
+              ></div>
+            </div>
+            <div>
+              <h2 class="text-xl font-bold text-white username">
+                {{ user.username }}
+              </h2>
+              <span class="text-sm text-gray-400"
+                >{{ user.chessTitle or '' }}</span
+              >
+            </div>
+          </div>
+
+          <!-- Status info -->
+          <div class="flex items-center space-x-2 text-white/80 text-sm mb-4">
+            <i
+              class="fas fa-circle text-xs status-dot {% if user.status == 'online' %}text-green-400{% else %}text-red-400{% endif %}"
+            ></i>
+            <span class="font-semibold status-text">{{ user.status }}</span>
+            <span class="text-gray-400 mx-2">|</span>
+            <i class="fas fa-clock text-xs"></i>
+            <span class="text-gray-400 last-active-text"
+              >{{ user.last_active }}</span
+            >
+          </div>
+
+          <!-- Stats -->
+          <div
+            class="bg-white/5 rounded-lg p-4 mb-4 space-y-1 text-gray-300 text-sm"
+          >
+            <p class="flex items-center space-x-2">
+              <i class="fas fa-chess"></i> Best Rating:
+              <span class="font-semibold text-white"
+                >{{ user.bestRating or 'N/A' }}</span
+              >
+              ({{ user.bestRatingType or 'N/A' }})
+            </p>
+            <p class="flex items-center space-x-2">
+              <i class="fas fa-flag"></i> Country:
+              <span class="font-semibold text-white"
+                >{{ user.countryName or 'N/A' }}</span
+              >
+            </p>
+            <p class="flex items-center space-x-2">
+              <i class="fas fa-running"></i> Puzzle Rush:
+              <span class="font-semibold text-white"
+                >{{ user.topPuzzleRushScore or 'N/A' }}</span
+              >
+            </p>
+          </div>
+
+          <!-- API URL form -->
+          <form
+            action="{{ url_for('update_api_url') }}"
+            method="POST"
+            class="flex items-center space-x-2 mb-2"
+          >
+            <input type="hidden" name="user_id" value="{{ user.id }}" />
+            <input
+              type="text"
+              name="api_url"
+              value="{{ user.api_url or '' }}"
+              placeholder="Notification API URL..."
+              class="flex-grow px-3 py-2 bg-white/10 text-white text-xs rounded-full border border-white/20 focus:outline-none focus:ring-1 focus:ring-purple-500 transition-all duration-200"
+            />
+            <button
+              type="submit"
+              class="px-4 py-2 text-white bg-purple-600/40 rounded-full text-xs font-semibold hover:bg-purple-500/50 transition-all duration-200"
+            >
+              <i class="fas fa-save"></i>
+            </button>
+          </form>
+
+          <!-- Remove user -->
+          <form
+            action="{{ url_for('remove_user', user_id=user.id) }}"
+            method="POST"
+            class="absolute top-4 right-4 z-10"
+          >
+            <button
+              type="submit"
+              class="w-8 h-8 flex items-center justify-center text-red-400 bg-red-600/20 rounded-full hover:bg-red-500/30 transition-all duration-200"
+            >
+              <i class="fas fa-trash-alt text-xs"></i>
+            </button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if not users %}
+      <div class="text-center text-gray-400 mt-12">
+        <i class="fas fa-info-circle text-4xl mb-4"></i>
+        <p class="text-lg">No users are currently being tracked.</p>
+        <p class="text-sm">Add a user with the form above to start tracking.</p>
+      </div>
+      {% endif %}
+    </main>
+
+    <!-- Floating notifications container -->
+    <div
+      id="notifications"
+      class="fixed bottom-4 right-4 flex flex-col space-y-2 z-50"
+    ></div>
+
+    <script>
+      const socket = io();
+
+      socket.on("connect", () => console.log("Connected to Socket.IO server"));
+      socket.on("disconnect", () =>
+        console.log("Disconnected from Socket.IO server")
+      );
+      socket.on("connect_error", (err) =>
+        console.log("Connection error:", err)
+      );
+
+      socket.on("update", function (data) {
+        console.log("Received update:", data);
+
+        const userCard = document.querySelector(
+          `[data-user-id='${data.user_id}']`
+        );
+        if (!userCard) return;
+
+        // Update avatar dot
+        const avatarDot = userCard.querySelector(".avatar-dot");
+        if (avatarDot) {
+          avatarDot.classList.remove(
+            "bg-green-400",
+            "bg-red-400",
+            "bg-gray-400",
+            "bg-yellow-400"
+          );
+          if (data.status === "online") avatarDot.classList.add("bg-green-400");
+          else if (data.status === "offline")
+            avatarDot.classList.add("bg-red-400");
+          else if (data.status === "playing" || data.status === "busy")
+            avatarDot.classList.add("bg-yellow-400");
+          else avatarDot.classList.add("bg-gray-400");
+        }
+
+        // Update status text
+        const statusText = userCard.querySelector(".status-text");
+        if (statusText) statusText.textContent = data.status;
+
+        // Update last active
+        const lastActiveText = userCard.querySelector(".last-active-text");
+        if (lastActiveText) lastActiveText.textContent = data.last_active;
+
+        // Update status line dot
+        const statusLineDot = userCard.querySelector(".status-dot");
+        if (statusLineDot) {
+          statusLineDot.classList.remove(
+            "text-green-400",
+            "text-red-400",
+            "text-gray-400",
+            "text-yellow-400"
+          );
+          if (data.status === "online")
+            statusLineDot.classList.add("text-green-400");
+          else if (data.status === "offline")
+            statusLineDot.classList.add("text-red-400");
+          else if (data.status === "playing" || data.status === "busy")
+            statusLineDot.classList.add("text-yellow-400");
+          else statusLineDot.classList.add("text-gray-400");
+        }
+
+        // Show notification if status changed
+        showNotification(userCard, data);
+      });
+
+      function showNotification(userCard, data) {
+        const username = userCard.querySelector(".username").textContent;
+        const notification = document.createElement("div");
+        notification.className =
+          "p-4 rounded-lg shadow-lg flex items-center space-x-3 transform transition-transform duration-300 translate-x-full";
+        notification.style.zIndex = 9999;
+        let bgClass = "bg-red-600/70";
+        let iconClass = "text-red-400";
+        if (data.status === "online") {
+          bgClass = "bg-green-600/70";
+          iconClass = "text-green-400";
+        } else if (data.status === "playing" || data.status === "busy") {
+          bgClass = "bg-yellow-600/70";
+          iconClass = "text-yellow-400";
+        }
+        notification.classList.add(bgClass, "backdrop-blur-md");
+        notification.innerHTML = `
+          <i class="fas fa-circle ${iconClass}"></i>
+          <span class="text-white text-sm">${username} is now ${data.status}</span>
+        `;
+
+        const container = document.getElementById("notifications");
+        container.appendChild(notification);
+
+        setTimeout(() => {
+          notification.classList.remove("translate-x-full");
+        }, 50);
+
+        setTimeout(() => {
+          notification.classList.add("translate-x-full");
+          setTimeout(() => notification.remove(), 300);
+        }, 3000);
+      }
+    </script>
+  </body>
+</html>
