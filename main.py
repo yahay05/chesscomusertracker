@@ -8,15 +8,9 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 from flask_socketio import SocketIO, emit
 import requests.exceptions
 import os
-from dotenv import load_dotenv
 
-load_dotenv()  # load environment variables from .env file
-
-admin_username = "admin" #os.getenv("ADMIN_USERNAME", "admin")
-admin_password = "password123" #os.getenv("ADMIN_PASSWORD", "password123")
-
-print(admin_username)
-print(admin_password)
+admin_username = os.getenv("ADMIN_USERNAME", "admin")  # default to "admin" if not set
+admin_password = os.getenv("ADMIN_PASSWORD", "password123")  # default to "password123" if not set
 
 # === Flask setup ===
 app = Flask(__name__)
