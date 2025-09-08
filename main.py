@@ -15,6 +15,9 @@ load_dotenv()  # load environment variables from .env file
 admin_username = os.getenv("ADMIN_USERNAME", "admin")
 admin_password = os.getenv("ADMIN_PASSWORD", "password123")
 
+print(admin_username)
+print(admin_password)
+
 # === Flask setup ===
 app = Flask(__name__)
 app.secret_key = "supersecret"
@@ -409,5 +412,5 @@ if __name__ == "__main__":
     thread = threading.Thread(target=fetch_chess_data, daemon=True)
     thread.start()
     socketio.start_background_task(fetch_chess_data)
-    socketio.run(app, debug=True, host='0.0.0.0', port=5000)
+    socketio.run(app, debug=False, host='0.0.0.0', port=5000)
 
