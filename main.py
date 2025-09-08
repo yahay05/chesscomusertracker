@@ -12,8 +12,8 @@ from dotenv import load_dotenv
 
 load_dotenv()  # load environment variables from .env file
 
-admin_username = os.getenv("ADMIN_USERNAME", "admin")
-admin_password = os.getenv("ADMIN_PASSWORD", "password123")
+admin_username = "admin" #os.getenv("ADMIN_USERNAME", "admin")
+admin_password = "password123" #os.getenv("ADMIN_PASSWORD", "password123")
 
 print(admin_username)
 print(admin_password)
