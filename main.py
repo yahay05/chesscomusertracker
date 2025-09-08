@@ -9,8 +9,8 @@ from flask_socketio import SocketIO, emit
 import requests.exceptions
 import os
 
-admin_username = os.getenv("ADMIN_USERNAME", "admin")  # default to "admin" if not set
-admin_password = os.getenv("ADMIN_PASSWORD", "password123")  # default to "password123" if not set
+admin_username = os.getenv("ADMIN_USERNAME")  # default to "admin" if not set
+admin_password = os.getenv("ADMIN_PASSWORD")  # default to "password123" if not set
 
 # === Flask setup ===
 app = Flask(__name__)
@@ -253,7 +253,6 @@ def login():
 
 @app.route("/dashboard")
 def dashboard():
-    print(admin_password,"admin-password" )
     if "user" not in session:
         return redirect(url_for("home"))
     conn = sqlite3.connect(DB_FILE)
