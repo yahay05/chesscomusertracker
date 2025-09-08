@@ -259,6 +259,7 @@ def login():
 
 @app.route("/dashboard")
 def dashboard():
+    print(admin_password,"admin-password" )
     if "user" not in session:
         return redirect(url_for("home"))
     conn = sqlite3.connect(DB_FILE)
